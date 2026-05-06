@@ -1,0 +1,32 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      args:
+        HTTP_PROXY: "${HTTP_PROXY:-}"
+        HTTPS_PROXY: "${HTTPS_PROXY:-}"
+    ports:
+      - "${BACKEND_PORT:-8000}:${BACKEND_PORT:-8000}"
+    environment:
+      PORT: "${BACKEND_PORT:-8000}"
+      GEMINI_API_KEY: "${GEMINI_API_KEY}"
+      NEWS_API_KEY: "${NEWS_API_KEY}"
+      HTTP_PROXY: "${HTTP_PROXY:-}"
+      HTTPS_PROXY: "${HTTPS_PROXY:-}"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        HTTP_PROXY: "${HTTP_PROXY:-}"
+        HTTPS_PROXY: "${HTTPS_PROXY:-}"
+        NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8000}"
+        PORT: "${FRONTEND_PORT:-3000}"
+    ports:
+      - "${FRONTEND_PORT:-3000}:${FRONTEND_PORT:-3000}"
+    environment:
+      PORT: "${FRONTEND_PORT:-3000}"
+    depends_on:
+      - backend
+    restart: unless-stopped
