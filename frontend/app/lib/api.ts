@@ -34,6 +34,12 @@ export async function fetchNews(query?: string) {
   return res.json();
 }
 
+export async function fetchFearGreed(): Promise<{ value: number; classification: string }> {
+  const res = await fetch(`${API_BASE}/crypto/fear-greed`);
+  if (!res.ok) throw new Error("Failed to fetch fear & greed");
+  return res.json();
+}
+
 export async function sendChat(message: string, history: { role: string; content: string }[]) {
   const res = await fetch(`${API_BASE}/chat/`, {
     method: "POST",

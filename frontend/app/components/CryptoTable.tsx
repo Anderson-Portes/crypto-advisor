@@ -1,6 +1,6 @@
 "use client";
 
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, Star } from "lucide-react";
 import { formatCurrency, formatPercent } from "../lib/api";
 import { useState } from "react";
 import CoinChart from "./CoinChart";
@@ -24,6 +24,8 @@ interface Props {
   data: Coin[];
   loading: boolean;
   currency: string;
+  favorites: string[];
+  toggleFavorite: (id: string) => void;
 }
 
 function MiniSparkline({ prices }: { prices: number[] }) {
@@ -51,7 +53,7 @@ function MiniSparkline({ prices }: { prices: number[] }) {
   );
 }
 
-export default function CryptoTable({ data, loading, currency }: Props) {
+export default function CryptoTable({ data, loading, currency, favorites, toggleFavorite }: Props) {
   const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
 
   if (loading) {
@@ -83,6 +85,7 @@ export default function CryptoTable({ data, loading, currency }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[var(--border)] text-[var(--text-secondary)] text-xs">
+                <th className="text-left px-4 py-3 font-medium w-8"></th>
                 <th className="text-left px-4 py-3 font-medium">#</th>
                 <th className="text-left px-4 py-3 font-medium">Moeda</th>
                 <th className="text-right px-4 py-3 font-medium">Preço</th>
@@ -99,14 +102,33 @@ export default function CryptoTable({ data, loading, currency }: Props) {
                 const change24 = coin.price_change_percentage_24h ?? 0;
                 const change1h = coin.price_change_percentage_1h_in_currency ?? 0;
                 const change7d = coin.price_change_percentage_7d_in_currency ?? 0;
+                const isFav = favorites.includes(coin.id);
                 return (
                   <tr
                     key={coin.id}
-                    onClick={() => setSelectedCoin(selectedCoin === coin.id ? null : coin.id)}
-                    className="border-b border-[var(--border)]/50 hover:bg-white/5 transition-colors cursor-pointer"
+                    className="border-b border-[var(--border)]/50 hover:bg-white/5 transition-colors"
                   >
-                    <td className="px-4 py-3 text-[var(--text-secondary)] text-xs">{coin.market_cap_rank}</td>
                     <td className="px-4 py-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(coin.id);
+                        }}
+                        className={`transition-colors ${
+                          isFav ? "text-yellow-400" : "text-[var(--border)] hover:text-yellow-400"
+                        }`}
+                        title={isFav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                      >
+                        <Star className={`w-3.5 h-3.5 ${isFav ? "fill-yellow-400" : ""}`} />
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-[var(--text-secondary)] text-xs">
+                      {coin.market_cap_rank}
+                    </td>
+                    <td
+                      className="px-4 py-3 cursor-pointer"
+                      onClick={() => setSelectedCoin(selectedCoin === coin.id ? null : coin.id)}
+                    >
                       <div className="flex items-center gap-2">
                         <img src={coin.image} alt={coin.name} className="w-7 h-7 rounded-full" />
                         <div>
@@ -115,7 +137,10 @@ export default function CryptoTable({ data, loading, currency }: Props) {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right font-mono font-semibold text-white">
+                    <td
+                      className="px-4 py-3 text-right font-mono font-semibold text-white cursor-pointer"
+                      onClick={() => setSelectedCoin(selectedCoin === coin.id ? null : coin.id)}
+                    >
                       {formatCurrency(coin.current_price, currency.toUpperCase())}
                     </td>
                     <td className={`px-4 py-3 text-right text-xs font-semibold ${change1h >= 0 ? "text-green-400" : "text-red-400"}`}>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { fetchMarkets, fetchGlobalStats, fetchTrending, fetchNews } from "./lib/api";
+import { fetchMarkets, fetchGlobalStats, fetchTrending, fetchNews, fetchFearGreed } from "./lib/api";
 import Header from "./components/Header";
 import GlobalStats from "./components/GlobalStats";
 import Filters from "./components/Filters";
@@ -12,15 +12,18 @@ import TrendingSection from "./components/TrendingSection";
 import DominanceChart from "./components/DominanceChart";
 import PerformanceChart from "./components/PerformanceChart";
 import AnalysisTab from "./components/AnalysisTab";
+import PortfolioTracker from "./components/PortfolioTracker";
+import PriceAlerts from "./components/PriceAlerts";
 import ChatBot from "./components/ChatBot";
-import { LayoutDashboard, Newspaper, Lightbulb, RefreshCw, LineChart } from "lucide-react";
+import { useFavorites } from "./hooks/useFavorites";
+import { LayoutDashboard, Newspaper, Lightbulb, RefreshCw, LineChart, Wallet } from "lucide-react";
 
 const DEFAULT_COINS = [
   "bitcoin", "ethereum", "binancecoin", "solana", "cardano",
   "ripple", "dogecoin", "polkadot", "matic-network", "avalanche-2",
 ];
 
-type Tab = "markets" | "analysis" | "news" | "tips";
+type Tab = "markets" | "analysis" | "news" | "tips" | "portfolio";
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("markets");
@@ -31,9 +34,13 @@ export default function Home() {
   const [currency, setCurrency] = useState("usd");
   const [sortBy, setSortBy] = useState("market_cap_desc");
   const [selectedCoins, setSelectedCoins] = useState<string[]>(DEFAULT_COINS);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+
+  const { favorites, toggle: toggleFavorite } = useFavorites();
 
   const [markets, setMarkets] = useState([]);
   const [globalStats, setGlobalStats] = useState<Record<string, unknown> | null>(null);
+  const [fearGreed, setFearGreed] = useState<{ value: number; classification: string } | null>(null);
   const [trending, setTrending] = useState([]);
   const [news, setNews] = useState([]);
 
@@ -59,8 +66,11 @@ export default function Home() {
 
   const loadGlobal = useCallback(async () => {
     setLoadingGlobal(true);
-    try { setGlobalStats(await fetchGlobalStats()); }
-    catch { /* ignore */ }
+    try {
+      const [stats, fg] = await Promise.allSettled([fetchGlobalStats(), fetchFearGreed()]);
+      if (stats.status === "fulfilled") setGlobalStats(stats.value);
+      if (fg.status === "fulfilled") setFearGreed(fg.value);
+    } catch { /* ignore */ }
     finally { setLoadingGlobal(false); }
   }, []);
 
@@ -101,11 +111,14 @@ export default function Home() {
   }
 
   const filteredMarkets = [...markets]
-    .filter((c: { name: string; symbol: string }) =>
-      !search ||
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.symbol.toLowerCase().includes(search.toLowerCase())
-    )
+    .filter((c: { id: string; name: string; symbol: string }) => {
+      if (showFavoritesOnly && !favorites.includes(c.id)) return false;
+      if (!search) return true;
+      return (
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        c.symbol.toLowerCase().includes(search.toLowerCase())
+      );
+    })
     .sort((a: Record<string, number>, b: Record<string, number>) => {
       switch (sortBy) {
         case "price_desc": return b.current_price - a.current_price;
@@ -119,6 +132,7 @@ export default function Home() {
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "markets", label: "Mercados", icon: <LayoutDashboard className="w-4 h-4" /> },
     { id: "analysis", label: "Análise", icon: <LineChart className="w-4 h-4" /> },
+    { id: "portfolio", label: "Portfólio", icon: <Wallet className="w-4 h-4" /> },
     { id: "news", label: "Notícias", icon: <Newspaper className="w-4 h-4" /> },
     { id: "tips", label: "Dicas", icon: <Lightbulb className="w-4 h-4" /> },
   ];
@@ -128,7 +142,7 @@ export default function Home() {
       <Header lastUpdated={lastUpdated} />
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        <GlobalStats data={globalStats} loading={loadingGlobal} />
+        <GlobalStats data={globalStats} loading={loadingGlobal} fearGreed={fearGreed} />
 
         {/* Tab Bar */}
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -164,13 +178,11 @@ export default function Home() {
         {/* Markets Tab */}
         {tab === "markets" && (
           <div className="space-y-6">
-            {/* Charts row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <DominanceChart globalStats={globalStats} loading={loadingGlobal} />
               <PerformanceChart data={filteredMarkets} loading={loadingMarkets} />
             </div>
 
-            {/* Filters + table */}
             <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr] gap-6">
               <div className="space-y-4">
                 <Filters
@@ -182,16 +194,33 @@ export default function Home() {
                   setSortBy={setSortBy}
                   selectedCoins={selectedCoins}
                   toggleCoin={toggleCoin}
+                  showFavoritesOnly={showFavoritesOnly}
+                  setShowFavoritesOnly={setShowFavoritesOnly}
+                  favoritesCount={favorites.length}
                 />
                 <TrendingSection coins={trending} loading={loadingTrending} />
               </div>
-              <CryptoTable data={filteredMarkets} loading={loadingMarkets} currency={currency} />
+              <CryptoTable
+                data={filteredMarkets}
+                loading={loadingMarkets}
+                currency={currency}
+                favorites={favorites}
+                toggleFavorite={toggleFavorite}
+              />
             </div>
           </div>
         )}
 
         {/* Analysis Tab */}
         {tab === "analysis" && <AnalysisTab currency={currency} />}
+
+        {/* Portfolio Tab */}
+        {tab === "portfolio" && (
+          <div className="space-y-6">
+            <PortfolioTracker markets={markets} currency={currency} />
+            <PriceAlerts markets={markets} />
+          </div>
+        )}
 
         {/* News Tab */}
         {tab === "news" && (

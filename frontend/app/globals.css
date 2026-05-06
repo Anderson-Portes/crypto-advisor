@@ -13,6 +13,30 @@
   --border: #1e2d45;
 }
 
+[data-theme="light"] {
+  --bg-primary: #f0f4f8;
+  --bg-secondary: #e2e8f0;
+  --bg-card: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --border: #cbd5e1;
+}
+
+[data-theme="light"] body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .card-glow {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.06);
+}
+[data-theme="light"] .card-glow:hover {
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.14);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: var(--border); }
+
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);

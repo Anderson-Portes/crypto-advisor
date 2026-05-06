@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, Star } from "lucide-react";
 
 const CURRENCIES = ["usd", "brl", "eur", "btc"];
 const SORT_OPTIONS = [
@@ -33,9 +33,24 @@ interface Props {
   setSortBy: (v: string) => void;
   selectedCoins: string[];
   toggleCoin: (id: string) => void;
+  showFavoritesOnly: boolean;
+  setShowFavoritesOnly: (v: boolean) => void;
+  favoritesCount: number;
 }
 
-export default function Filters({ search, setSearch, currency, setCurrency, sortBy, setSortBy, selectedCoins, toggleCoin }: Props) {
+export default function Filters({
+  search,
+  setSearch,
+  currency,
+  setCurrency,
+  sortBy,
+  setSortBy,
+  selectedCoins,
+  toggleCoin,
+  showFavoritesOnly,
+  setShowFavoritesOnly,
+  favoritesCount,
+}: Props) {
   return (
     <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)] space-y-4">
       <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text-secondary)]">
@@ -54,6 +69,26 @@ export default function Filters({ search, setSearch, currency, setCurrency, sort
           className="w-full bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder-[var(--text-secondary)] focus:outline-none focus:border-blue-500 transition-colors"
         />
       </div>
+
+      {/* Favorites toggle */}
+      <button
+        onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all border ${
+          showFavoritesOnly
+            ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/40"
+            : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-transparent hover:border-[var(--border)]"
+        }`}
+      >
+        <span className="flex items-center gap-2">
+          <Star className={`w-3.5 h-3.5 ${showFavoritesOnly ? "fill-yellow-400" : ""}`} />
+          Apenas favoritos
+        </span>
+        {favoritesCount > 0 && (
+          <span className="px-1.5 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 text-[10px]">
+            {favoritesCount}
+          </span>
+        )}
+      </button>
 
       {/* Currency */}
       <div>

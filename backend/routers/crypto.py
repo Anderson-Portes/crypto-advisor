@@ -1,6 +1,6 @@
 import httpx
 from fastapi import APIRouter, Query, HTTPException
-from services.coingecko import get_market_data, get_global_stats, get_trending, get_coin_chart, COIN_IDS
+from services.coingecko import get_market_data, get_global_stats, get_trending, get_coin_chart, get_fear_greed, COIN_IDS
 
 router = APIRouter(prefix="/crypto", tags=["crypto"])
 
@@ -54,6 +54,14 @@ async def chart(
 ):
     try:
         return await get_coin_chart(coin_id, days, currency)
+    except Exception as e:
+        raise _handle_error(e)
+
+
+@router.get("/fear-greed")
+async def fear_greed_index():
+    try:
+        return await get_fear_greed()
     except Exception as e:
         raise _handle_error(e)
 

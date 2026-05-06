@@ -13,7 +13,8 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
-import { TrendingUp, TrendingDown, DollarSign, BarChart2, Activity, Layers } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, BarChart2, Activity, Layers, GitCompare } from "lucide-react";
+import CoinComparator from "./CoinComparator";
 
 const COINS = [
   { symbol: "BTC", id: "bitcoin", name: "Bitcoin" },
@@ -317,6 +318,15 @@ export default function AnalysisTab({ currency }: { currency: string }) {
             </ResponsiveContainer>}
           </div>
         )}
+      </div>
+
+      {/* Comparador */}
+      <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4">
+        <div className="flex items-center gap-2 mb-4">
+          <GitCompare className="w-4 h-4 text-blue-400" />
+          <h3 className="font-semibold text-white">Comparador de Moedas</h3>
+        </div>
+        <CoinComparator currency={currency} />
       </div>
     </div>
   );

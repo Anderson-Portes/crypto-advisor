@@ -109,6 +109,24 @@ async def get_trending() -> list[dict]:
         return coins
 
 
+async def get_fear_greed() -> dict:
+    cached = _get_cache("fear_greed", 3600)
+    if cached is not None:
+        return cached  # type: ignore
+
+    async with _client() as client:
+        resp = await client.get("https://api.alternative.me/fng/", params={"limit": 1})
+        resp.raise_for_status()
+        items = resp.json().get("data", [{}])
+        d = items[0] if items else {}
+        result = {
+            "value": int(d.get("value", 50)),
+            "classification": d.get("value_classification", "Neutral"),
+        }
+        _set_cache("fear_greed", result)
+        return result
+
+
 async def get_coin_chart(coin_id: str, days: int = 7, vs_currency: str = "usd") -> dict:
     cache_key = f"chart:{coin_id}:{days}:{vs_currency}"
     cached = _get_cache(cache_key, _CACHE_TTL["chart"])
